@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Aplicamos tu fondo oscuro y texto claro por defecto a toda la página */
+body {
+  background-color: #18181B; /* onyx-dark */
+  color: #E0E0E0; /* onyx-light */
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}

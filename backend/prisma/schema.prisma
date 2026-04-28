@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Crear tabla/colección de Usuarios 
+model Usuario {
+  id                  String      @id @default(uuid())
+  nombre              String      
+  email               String      @unique
+  contrasena_hasheada String      
+  nivel               Int         @default(1) 
+  exp                 Int         @default(0) 
+  
+  // Relaciones
+  documentos          Documento[]
+  progresos           Progreso[]
+}
+
+// Crear tabla de Documentos 
+model Documento {
+  id             String   @id @default(uuid())
+  propietario_id String   
+  es_publico     Boolean  @default(false) 
+  URL_archivo    String   
+  titulo         String   
+  etiquetas      String[] 
+
+  // Relación con el usuario que lo subió
+  propietario    Usuario  @relation(fields: [propietario_id], references: [id])
+}
+
+// Crear tabla de Desafíos 
+model Desafio {
+  id               String     @id @default(uuid())
+  titulo           String     
+  descripcion      String     
+  nivel_dificultad String     // Ej: "Principiante", "Intermedio"
+  codigo_inicial   String     
+  casos_prueba     Json       // Guardaremos un array de inputs/outputs en formato JSON
+
+  // Relación con el progreso de los usuarios
+  progresos        Progreso[]
+}
+
+// Crear tabla de Progreso 
+model Progreso {
+  id               String    @id @default(uuid())
+  usuario_id       String    
+  desafio_id       String    
+  estado           String    // Ej: "Completado", "En curso"
+  fecha_completado DateTime? 
+
+  // Relaciones
+  usuario          Usuario   @relation(fields: [usuario_id], references: [id])
+  desafio          Desafio   @relation(fields: [desafio_id], references: [id])
+
+  // Un usuario solo puede tener un registro de progreso por cada desafío único
+  @@unique([usuario_id, desafio_id])
+}
