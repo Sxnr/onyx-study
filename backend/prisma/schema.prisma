@@ -31,6 +31,9 @@ model Documento {
 
   // Relación con el usuario que lo subió
   propietario    Usuario  @relation(fields: [propietario_id], references: [id])
+
+  // Timestamps (Necesario para que el Frontend ordene los archivos por fecha)
+  createdAt      DateTime @default(now())
 }
 
 // Crear tabla de Desafíos 
