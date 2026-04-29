@@ -18,6 +18,7 @@ model Usuario {
   // Relaciones
   documentos          Documento[]
   progresos           Progreso[]
+  favoritos           Favorito[]
 }
 
 // Crear tabla de Documentos 
@@ -63,4 +64,25 @@ model Progreso {
 
   // Un usuario solo puede tener un registro de progreso por cada desafío único
   @@unique([usuario_id, desafio_id])
+}
+
+model RecursoPublico {
+  id          String   @id @default(uuid())
+  titulo      String
+  descripcion String
+  url         String
+  categoria   String   // "Documentación", "Librería", "Curso", "CheatSheet"
+  lenguaje    String   // "JavaScript", "Python", "General", etc.
+  asignatura  String?   
+  favoritoDe  Favorito[]
+}
+
+model Favorito {
+  id                String         @id @default(uuid())
+  usuario_id        String
+  recurso_id        String
+  usuario           Usuario        @relation(fields: [usuario_id], references: [id])
+  recurso           RecursoPublico @relation(fields: [recurso_id], references: [id])
+
+  @@unique([usuario_id, recurso_id])
 }

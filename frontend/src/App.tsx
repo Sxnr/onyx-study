@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Boveda } from './pages/Boveda';
 import { Visor } from './pages/Visor';
 import { Sandbox } from './pages/Sandbox';
+import { Biblioteca } from './pages/Biblioteca';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/boveda" element={<Boveda />} /> {/* 2. Registrar la ruta */}
             <Route path="/visor" element={<Visor />} /> {/* Agregar esta línea */}
             <Route path="/sandbox" element={<Sandbox />} />
+            <Route path="/biblioteca" element={<Biblioteca />} />
           </Route>
         </Route>
       </Routes>
