@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import documentoRoutes from './routes/documento.routes';
+import path from 'path';
+import ejecucionRoutes from './routes/ejecucion.routes';
 
 import authRoutes from './routes/auth.routes';
 import sandboxRoutes from './routes/sandbox.routes';
@@ -15,6 +17,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sandbox', sandboxRoutes);
 app.use('/api/documentos', documentoRoutes);
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/api/ejecucion', ejecucionRoutes);
 +
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ message: '¡El servidor de Onyx Study está vivo!' });

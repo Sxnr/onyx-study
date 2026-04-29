@@ -4,7 +4,9 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Boveda } from './pages/Boveda'; // 1. Importar el componente
+import { Boveda } from './pages/Boveda';
+import { Visor } from './pages/Visor';
+import { Sandbox } from './pages/Sandbox';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="/boveda" element={<Boveda />} /> {/* 2. Registrar la ruta */}
+            <Route path="/visor" element={<Visor />} /> {/* Agregar esta línea */}
+            <Route path="/sandbox" element={<Sandbox />} />
           </Route>
         </Route>
       </Routes>

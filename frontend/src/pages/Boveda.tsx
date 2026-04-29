@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FileText, Plus, Search, Trash2, X, UploadCloud } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 export const Boveda = () => {
   const [documentos, setDocumentos] = useState([]);
@@ -9,6 +10,7 @@ export const Boveda = () => {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [titulo, setTitulo] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
   
   const token = useAuthStore((state) => state.token);
 
@@ -58,6 +60,7 @@ export const Boveda = () => {
 
   return (
     <div className="animate-fade-in space-y-6 relative">
+      {/* Cabecera */}
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold">Mi Bóveda</h2>
@@ -72,6 +75,7 @@ export const Boveda = () => {
         </button>
       </div>
 
+      {/* Buscador */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-onyx-light/30" size={18} />
         <input 
@@ -81,6 +85,7 @@ export const Boveda = () => {
         />
       </div>
 
+      {/* Grilla de Documentos */}
       {documentos.length === 0 ? (
         <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-onyx-mint/10 rounded-3xl">
           <FileText size={48} className="text-onyx-light/20 mb-2" />
@@ -89,16 +94,30 @@ export const Boveda = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {documentos.map((doc: any) => (
-            <div key={doc.id} className="bg-onyx-card p-4 rounded-2xl border border-onyx-mint/5 hover:border-onyx-mint/30 transition-all group cursor-pointer">
+            <div 
+              key={doc.id} 
+              onClick={() => navigate('/visor', { state: { titulo: doc.titulo, url: doc.URL_archivo } })}
+              className="bg-onyx-card p-4 rounded-2xl border border-onyx-mint/5 hover:border-onyx-mint/30 transition-all group cursor-pointer flex flex-col"
+            >
               <div className="flex items-start justify-between">
                 <div className="w-10 h-10 bg-onyx-mint/10 rounded-lg flex items-center justify-center text-onyx-mint mb-3">
                   <FileText size={20} />
                 </div>
-                <button className="text-onyx-light/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Botón Eliminar con stopPropagation */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Evita que se abra el visor al hacer clic aquí
+                    console.log("Eliminar doc", doc.id);
+                  }}
+                  className="text-onyx-light/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
-              <h4 className="font-medium text-onyx-light truncate">{doc.titulo}</h4>
+              
+              <h4 className="font-medium text-onyx-light truncate" title={doc.titulo}>
+                {doc.titulo}
+              </h4>
               <p className="text-xs text-onyx-light/40 mt-1">
                 {new Date(doc.createdAt).toLocaleDateString()}
               </p>
@@ -110,7 +129,7 @@ export const Boveda = () => {
       {/* Modal de Subida */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-onyx-card p-6 rounded-2xl border border-onyx-mint/20 w-full max-w-md shadow-2xl">
+          <div className="bg-onyx-card p-6 rounded-2xl border border-onyx-mint/20 w-full max-w-md shadow-2xl animate-fade-in">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold">Subir a la Bóveda</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-onyx-light/50 hover:text-onyx-light">
