@@ -19,6 +19,7 @@ model Usuario {
   documentos          Documento[]
   progresos           Progreso[]
   favoritos           Favorito[]
+  hitos               Hito[]
 }
 
 // Crear tabla de Documentos 
@@ -40,30 +41,31 @@ model Documento {
 // Crear tabla de Desafíos 
 model Desafio {
   id               String     @id @default(uuid())
-  titulo           String     
-  descripcion      String     
-  nivel_dificultad String     // Ej: "Principiante", "Intermedio"
-  codigo_inicial   String     
-  casos_prueba     Json       // Guardaremos un array de inputs/outputs en formato JSON
+  titulo           String
+  descripcion      String
+  nivel_dificultad String     // "Principiante", "Intermedio", "Avanzado"
+  lenguaje         String     @default("universal")
+  xp               Int        @default(100)
+  codigo_inicial   String?    @db.Text
+  casos_prueba     Json?      // Guardaremos los inputs y outputs esperados aquí
+  createdAt        DateTime   @default(now())
 
-  // Relación con el progreso de los usuarios
   progresos        Progreso[]
 }
 
 // Crear tabla de Progreso 
 model Progreso {
-  id               String    @id @default(uuid())
-  usuario_id       String    
-  desafio_id       String    
-  estado           String    // Ej: "Completado", "En curso"
-  fecha_completado DateTime? 
+  id               String   @id @default(uuid())
+  usuario_id       String
+  desafio_id       String
+  estado           String   // Ej: "Completado"
+  fecha_completado DateTime @default(now())
 
-  // Relaciones
-  usuario          Usuario   @relation(fields: [usuario_id], references: [id])
-  desafio          Desafio   @relation(fields: [desafio_id], references: [id])
+  usuario          Usuario  @relation(fields: [usuario_id], references: [id])
+  desafio          Desafio  @relation(fields: [desafio_id], references: [id])
 
-  // Un usuario solo puede tener un registro de progreso por cada desafío único
-  @@unique([usuario_id, desafio_id])
+  // Esto asegura que un usuario solo tenga un registro de progreso por cada desafío
+  @@unique([usuario_id, desafio_id]) 
 }
 
 model RecursoPublico {
@@ -85,4 +87,16 @@ model Favorito {
   recurso           RecursoPublico @relation(fields: [recurso_id], references: [id])
 
   @@unique([usuario_id, recurso_id])
+}
+
+// Agrega esto a tu archivo schema.prisma
+model Hito {
+  id        String   @id @default(uuid())
+  ramo      String
+  tipo      String
+  fecha     String
+  urgente   Boolean  @default(false)
+  userId    String
+  usuario   Usuario  @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }

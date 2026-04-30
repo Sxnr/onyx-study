@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import { toPng } from 'html-to-image';
 import { 
-  Play, Code2, Terminal, Settings2, Download, 
-  Check, BookOpen, FileText, HelpCircle, ExternalLink, X, Copy
+  Play, Code2, Terminal, Download, 
+  Check, BookOpen, FileText, HelpCircle, ExternalLink, X, Copy, Camera, Sparkles
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -23,7 +24,6 @@ const DOCS_LINKS: Record<string, string> = {
   dart: 'https://dart.dev/guides'
 };
 
-// Base de conocimientos rápida por lenguaje
 const CHEATSHEETS: Record<string, { id: string; titulo: string; codigo: string }[]> = {
   java: [
     { id: 'j1', titulo: 'Imprimir', codigo: 'System.out.println("Texto");' },
@@ -59,13 +59,19 @@ export const Sandbox = () => {
   const [descargado, setDescargado] = useState(false);
   const [tabActiva, setTabActiva] = useState<'guia' | 'boveda' | 'docs'>('docs');
   
-  // Estados para Bóveda e integración
+  // Estados para las nuevas Features
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [errorDetectado, setErrorDetectado] = useState(false);
+  const [isExplaining, setIsExplaining] = useState(false);
+
+  // Estados Bóveda
   const [misDocs, setMisDocs] = useState([]);
-  const [docSeleccionado, setDocSeleccionado] = useState<any>(null); // Controla el modal del PDF
-  const [copiadoId, setCopiadoId] = useState<string | null>(null); // Feedback visual al copiar código
+  const [docSeleccionado, setDocSeleccionado] = useState<any>(null);
+  const [copiadoId, setCopiadoId] = useState<string | null>(null);
   
   const token = useAuthStore((state) => state.token);
   const editorRef = useRef<any>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchMyDocs = async () => {
@@ -86,6 +92,7 @@ export const Sandbox = () => {
     setLenguaje(nuevo);
     setCodigo(BOILERPLATES[nuevo]);
     setConsola(`Entorno cambiado a ${nuevo.toUpperCase()}.`);
+    setErrorDetectado(false);
   };
 
   const handleEditorDidMount = (editor: any, monaco: any) => {
@@ -96,6 +103,7 @@ export const Sandbox = () => {
 
   const handleRunCode = async () => {
     setConsola(`[${new Date().toLocaleTimeString()}] Iniciando compilación de ${lenguaje.toUpperCase()}...\nContactando servidor...`);
+    setErrorDetectado(false);
     
     try {
       const res = await axios.post('http://localhost:5000/api/ejecucion/run', {
@@ -107,9 +115,47 @@ export const Sandbox = () => {
       const metrics = `\n--- \nMemoria: ${res.data.memory || 0} KB | Tiempo: ${res.data.cpuTime || 0}s`;
       
       setConsola(`[${new Date().toLocaleTimeString()}] Ejecución completada:\n\n${out}${metrics}`);
+      
+      // Detección simple de errores
+      const lowerOut = out.toLowerCase();
+      if (lowerOut.includes('error') || lowerOut.includes('exception') || lowerOut.includes('traceback')) {
+        setErrorDetectado(true);
+      }
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Error de conexión con el compilador.';
       setConsola(`[${new Date().toLocaleTimeString()}] ERROR:\n\n${errorMsg}`);
+      setErrorDetectado(true);
+    }
+  };
+
+  // NUEVA FEATURE: IA Lite
+  const handleExplicarError = async () => {
+    setIsExplaining(true);
+    try {
+      const res = await axios.post('http://localhost:5000/api/ejecucion/explicar', { errorText: consola, lenguaje });
+      setConsola(prev => prev + `\n\n✨ [Onyx IA Lite]: ${res.data.explicacion}`);
+      setErrorDetectado(false); // Ocultar botón tras explicar
+    } catch (error) {
+      setConsola(prev => prev + `\n\n✨ [Onyx IA Lite]: No pude analizar el error, intenta revisar la sintaxis base.`);
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  // NUEVA FEATURE: Captura Estilo Carbon
+  const handleCapturarPantalla = async () => {
+    if (!captureRef.current) return;
+    setIsCapturing(true);
+    try {
+      const dataUrl = await toPng(captureRef.current, { backgroundColor: '#18181b', quality: 0.95 });
+      const link = document.createElement('a');
+      link.download = `onyx-snippet-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Error capturando pantalla', err);
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -117,7 +163,7 @@ export const Sandbox = () => {
     const blob = new Blob([codigo], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.download = `script_onyx.${lenguaje === 'python' ? 'py' : lenguaje === 'javascript' ? 'js' : lenguaje}`;
+    link.download = `main.${lenguaje === 'python' ? 'py' : lenguaje === 'javascript' ? 'js' : lenguaje}`;
     link.href = url;
     link.click();
     setDescargado(true);
@@ -152,11 +198,22 @@ export const Sandbox = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={descargarArchivo} className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${descargado ? 'border-onyx-mint text-onyx-mint' : 'border-onyx-mint/20 text-onyx-light/70 hover:bg-onyx-mint/5'}`}>
+          {/* Botón de Captura de Pantalla */}
+          <button 
+            onClick={handleCapturarPantalla} 
+            disabled={isCapturing}
+            title="Exportar código como imagen"
+            className="flex items-center justify-center w-10 h-10 rounded-lg border border-onyx-mint/20 text-onyx-light/70 hover:bg-onyx-mint/10 hover:text-onyx-mint transition-all"
+          >
+            <Camera size={18} className={isCapturing ? 'animate-pulse' : ''} />
+          </button>
+
+          <button onClick={descargarArchivo} className={`flex items-center gap-2 px-4 h-10 rounded-lg border transition-all ${descargado ? 'border-onyx-mint text-onyx-mint' : 'border-onyx-mint/20 text-onyx-light/70 hover:bg-onyx-mint/5'}`}>
             {descargado ? <Check size={18} /> : <Download size={18} />}
             <span className="text-sm font-semibold hidden md:block">Extraer</span>
           </button>
-          <button onClick={handleRunCode} className="flex items-center gap-2 bg-onyx-mint text-onyx-dark font-bold px-6 py-2 rounded-lg hover:shadow-[0_0_20px_rgba(167,255,235,0.3)] transition-all">
+          
+          <button onClick={handleRunCode} className="flex items-center gap-2 bg-onyx-mint text-onyx-dark font-bold px-6 h-10 rounded-lg hover:shadow-[0_0_20px_rgba(167,255,235,0.3)] transition-all">
             <Play size={18} fill="currentColor" />
             <span>Ejecutar</span>
           </button>
@@ -164,9 +221,8 @@ export const Sandbox = () => {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar de Ayuda y Apuntes */}
+        {/* Sidebar de Ayuda y Apuntes (RESTAURADO) */}
         <div className="w-80 lg:w-96 bg-onyx-dark border-r border-onyx-mint/10 flex flex-col overflow-hidden">
-          {/* Tabs Selector */}
           <div className="flex border-b border-onyx-mint/10 bg-onyx-card/30">
             <button onClick={() => setTabActiva('docs')} className={`flex-1 p-3 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${tabActiva === 'docs' ? 'text-onyx-mint border-b-2 border-onyx-mint' : 'text-onyx-light/40 hover:text-onyx-light/70'}`}>
               <BookOpen size={14} /> Snippets
@@ -180,8 +236,6 @@ export const Sandbox = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            
-            {/* Tab: Documentación y Cheatsheet */}
             {tabActiva === 'docs' && (
               <div className="space-y-6 animate-fade-in">
                 <a href={DOCS_LINKS[lenguaje]} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-onyx-mint/5 border border-onyx-mint/20 rounded-xl text-onyx-mint hover:bg-onyx-mint/10 transition-all">
@@ -217,7 +271,6 @@ export const Sandbox = () => {
               </div>
             )}
 
-            {/* Tab: Bóveda */}
             {tabActiva === 'boveda' && (
               <div className="space-y-3 animate-fade-in">
                 <h4 className="text-onyx-mint font-bold text-sm mb-2">Apuntes Personales</h4>
@@ -239,7 +292,6 @@ export const Sandbox = () => {
               </div>
             )}
 
-            {/* Tab: Atajos */}
             {tabActiva === 'guia' && (
               <div className="space-y-4 animate-fade-in">
                 <h4 className="text-onyx-mint font-bold text-sm">Quick Reference</h4>
@@ -263,24 +315,56 @@ export const Sandbox = () => {
         </div>
 
         {/* Editor y Consola */}
-        <div className="flex-1 flex flex-col bg-[#1e1e1e] min-w-0">
-          <div className="flex-1">
-            <Editor
-              height="100%"
-              language={lenguaje === 'cpp' ? 'cpp' : lenguaje}
-              theme="vs-dark"
-              value={codigo}
-              onChange={(val) => setCodigo(val || '')}
-              onMount={handleEditorDidMount}
-              options={{ minimap: { enabled: false }, fontSize: 15, fontFamily: 'Fira Code', padding: { top: 16 } }}
-            />
-          </div>
-          <div className="h-48 bg-[#0d0d0d] border-t border-onyx-mint/10 flex flex-col">
-            <div className="px-4 py-2 border-b border-onyx-mint/5 flex items-center gap-2 text-[10px] font-bold text-onyx-light/30 uppercase tracking-widest">
-              <Terminal size={14} className="text-onyx-mint" /> Console Output
+        <div className="flex-1 flex flex-col bg-[#1e1e1e] min-w-0" ref={captureRef}>
+          {/* Padding estético para captura de imagen */}
+          <div className={`flex-1 flex flex-col ${isCapturing ? 'p-6 bg-[#18181b]' : ''}`}>
+            
+            {/* Header decorativo estilo MacOS para la captura */}
+            {isCapturing && (
+              <div className="bg-[#2d2d2d] rounded-t-xl h-8 flex items-center px-4 gap-2 border-b border-black/20">
+                <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                <span className="text-[10px] text-white/30 ml-4 font-mono">main.{lenguaje} - Onyx Study</span>
+              </div>
+            )}
+
+            <div className={`flex-1 ${isCapturing ? 'rounded-b-xl overflow-hidden border border-[#2d2d2d]' : ''}`}>
+              <Editor
+                height="100%"
+                language={lenguaje === 'cpp' ? 'cpp' : lenguaje}
+                theme="vs-dark"
+                value={codigo}
+                onChange={(val) => setCodigo(val || '')}
+                onMount={handleEditorDidMount}
+                options={{ minimap: { enabled: false }, fontSize: 15, fontFamily: 'Fira Code', padding: { top: 16 } }}
+              />
             </div>
-            <pre className="p-4 text-onyx-light/80 font-mono text-xs flex-1 overflow-y-auto">{consola}</pre>
           </div>
+          
+          {/* Consola con IA Lite */}
+          {!isCapturing && (
+            <div className="h-48 bg-[#0d0d0d] border-t border-onyx-mint/10 flex flex-col relative">
+              <div className="px-4 py-2 border-b border-onyx-mint/5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-onyx-light/30 uppercase tracking-widest">
+                  <Terminal size={14} className="text-onyx-mint" /> Console Output
+                </div>
+                
+                {/* Botón IA Lite Aparece si hay error */}
+                {errorDetectado && (
+                  <button 
+                    onClick={handleExplicarError}
+                    disabled={isExplaining}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-onyx-mint/10 text-onyx-mint border border-onyx-mint/20 rounded hover:bg-onyx-mint/20 transition-all text-xs font-bold animate-fade-in"
+                  >
+                    <Sparkles size={12} />
+                    {isExplaining ? 'Analizando...' : 'Explicar Error'}
+                  </button>
+                )}
+              </div>
+              <pre className="p-4 text-onyx-light/80 font-mono text-xs flex-1 overflow-y-auto">{consola}</pre>
+            </div>
+          )}
         </div>
       </div>
 
@@ -288,7 +372,6 @@ export const Sandbox = () => {
       {docSeleccionado && (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-8 animate-fade-in">
           <div className="bg-onyx-dark w-full max-w-5xl h-full flex flex-col rounded-2xl border border-onyx-mint/30 overflow-hidden shadow-2xl">
-            {/* Cabecera del Modal */}
             <div className="bg-onyx-card px-4 py-3 border-b border-onyx-mint/20 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <FileText size={20} className="text-onyx-mint" />
@@ -302,7 +385,6 @@ export const Sandbox = () => {
                 <X size={20} />
               </button>
             </div>
-            {/* Visor PDF (Iframe) */}
             <div className="flex-1 bg-white">
               <iframe 
                 src={`http://localhost:5000/${docSeleccionado.URL_archivo.replace(/\\/g, '/')}`}

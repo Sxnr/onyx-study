@@ -8,6 +8,8 @@ import { Boveda } from './pages/Boveda';
 import { Visor } from './pages/Visor';
 import { Sandbox } from './pages/Sandbox';
 import { Biblioteca } from './pages/Biblioteca';
+import { Retos } from './pages/Retos';
+import { Workspace } from './pages/Workspace';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
             <Route path="/visor" element={<Visor />} /> {/* Agregar esta línea */}
             <Route path="/sandbox" element={<Sandbox />} />
             <Route path="/biblioteca" element={<Biblioteca />} />
+            <Route path="/retos" element={<Retos />} />
+            <Route path="/workspace/:id" element={<Workspace />} />
           </Route>
         </Route>
       </Routes>

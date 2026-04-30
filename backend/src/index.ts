@@ -8,6 +8,8 @@ import ejecucionRoutes from './routes/ejecucion.routes';
 import authRoutes from './routes/auth.routes';
 import sandboxRoutes from './routes/sandbox.routes';
 import bibliotecaRoutes from './routes/biblioteca.routes';
+import hitoRoutes from './routes/hito.routes';
+import desafioRoutes from './routes/desafio.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +23,8 @@ app.use('/api/documentos', documentoRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/ejecucion', ejecucionRoutes);
 app.use('/api/biblioteca', bibliotecaRoutes);
+app.use('/api/hitos', hitoRoutes);
+app.use('/api/desafios', desafioRoutes);
 +
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ message: '¡El servidor de Onyx Study está vivo!' });
