@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Star, Book, Library, GraduationCap, ExternalLink, Filter } from 'lucide-react';
+import { Search, Star, Book, Library, GraduationCap, ExternalLink } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 export const Biblioteca = () => {

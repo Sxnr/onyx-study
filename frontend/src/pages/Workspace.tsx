@@ -4,7 +4,6 @@ import axios from "axios";
 import Editor from "@monaco-editor/react";
 import {
   Play,
-  CheckCircle2,
   ChevronLeft,
   Lightbulb,
   Terminal,
