@@ -10,6 +10,7 @@ import { Sandbox } from './pages/Sandbox';
 import { Biblioteca } from './pages/Biblioteca';
 import { Retos } from './pages/Retos';
 import { Workspace } from './pages/Workspace';
+import { ProjectHub } from './pages/ProjectHub';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/biblioteca" element={<Biblioteca />} />
             <Route path="/retos" element={<Retos />} />
             <Route path="/workspace/:id" element={<Workspace />} />
+            <Route path="/projectos" element={<ProjectHub />} />
           </Route>
         </Route>
       </Routes>

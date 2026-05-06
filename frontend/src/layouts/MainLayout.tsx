@@ -1,10 +1,10 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Library, TerminalSquare, Trophy, LogOut } from 'lucide-react';
-import { useAuthStore } from '../store/authStore'; // Importante
+import { LayoutDashboard, FolderKanban, Library, TerminalSquare, Trophy, LogOut, Briefcase } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 export const MainLayout = () => {
   const location = useLocation();
-  const { user, logout } = useAuthStore(); // Obtenemos el usuario y la función de logout
+  const { user, logout } = useAuthStore();
 
   const navItems = [
     { path: '/', name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -12,6 +12,7 @@ export const MainLayout = () => {
     { path: '/biblioteca', name: 'Biblioteca', icon: <Library size={20} /> },
     { path: '/sandbox', name: 'Sandbox', icon: <TerminalSquare size={20} /> },
     { path: '/retos', name: 'Retos', icon: <Trophy size={20} /> },
+    { path: '/projectos', name: 'Proyectos', icon: <Briefcase size={20} /> },
   ];
 
   return (
