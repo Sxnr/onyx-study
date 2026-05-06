@@ -98,4 +98,4 @@ La aplicación estará corriendo de forma local en `http://localhost:5173`.
 
 ## 👨‍💻 Autor
 
-Desarrollado por **Francisco Javier Carrera Fernández**, Estudiante de Ingeniería Civil en Computación.
+Desarrollado por **Francisco Javier Carrera Fernández**, Estudiante de Ingeniería Civil en Informatica.
